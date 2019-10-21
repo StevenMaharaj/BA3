@@ -1,0 +1,69 @@
+---
+title: 'Assignment 3 Question 1 Steven Maharaj 695281'
+header-includes:
+   - \usepackage{bm}
+   - \usepackage{amsmath}
+   - \newcommand{\xb}[1]{\bm X_{i#1} \bm \beta}
+output: 
+  pdf_document:
+    number_sections: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Due: Friday 25 October 2019**  
+\vspace{5 mm}
+
+**There are places in this assignment where R code will be required. Therefore set the random seed so assignment is reproducible.**
+
+```{r}
+set.seed(965281)  #Please change random seed to your student id number.
+```
+
+## Question One (17 marks)
+
+To explore some properties of Expectation propagation and Hamiltonian Monte Carlo, consider the dataset \texttt{Warpbreaks.csv}, which is on LMS and previously analysed in assignment 2. This dataset contains information of the number of breaks in a consignment of wool. In addition, Wool type (A or B) and tension level (L, M or H) was recorded. As the observed data consists of integer counts, it was assumed that a Poisson distribution should be used to model counts. The probability mass function of a Poisson distribution is
+
+\[ Pr(y_i|\lambda_i) = \frac{\lambda_i^{y_i}e^{-\lambda_i}}{y_i!}.  \]
+
+
+a) Assuming that the canonical link for observation $i$ can be represented as ${\bf X}_i\bm \beta$, determine the following:
+
+\begin{itemize}
+\item The likelihood, $p({\bf y}|\bm \beta)$ and log-likelihood.
+\item The first derivative of the log-likelihood with respect to $\bm \beta$.
+\end{itemize}
+
+Answer:
+
+Given $n$ observations we have 
+$$p(\bm y|\bm \beta) = \prod_{i = 1}^{n} \frac{\lambda_i^{ y_i}e^{-\lambda_i}}{y_i!}$$
+thus the log-liklihood
+
+\begin{align*}
+\log(p(\bm y|\bm \beta)) &= \sum_{i = 1}^{n} y_i\log(\lambda_i)  - \lambda_i -\log(y_i!)\\
+&= \sum_{i = 1}^{n} y_i\xb{}  - e^{\xb{}} -\log(y_i!) \tag{since $\log(\lambda) = \xb{}$}
+\end{align*}
+
+Taking the derivate 
+
+$$\frac{d\log(p(\bm y|\bm \beta))}{d \bm \beta_j} = \sum_{i = 1}^{n}\bm X_{ij}y_i - \bm X_{ij}e^{\xb{}}.$$
+Thus,
+$$\frac{d\log(p(\bm y|\bm \beta))}{d \bm \beta} = \bm X (\bm y - e^{\bm X \bm \beta}).$$
+b) If you wish to construct a Bayesian analogue to Poisson regression, what prior(s) would you use?
+
+We choose $\bm \beta \sim \mathcal{N}(0,\Sigma)$ where sigma is the variance
+co-variance matrix of a fitted glm.
+Actually it should be flat
+c) Fit a Poisson regression to the warpbreak data, with Wool type and tension treated as factors, using Hamiltonian Monte Carlo. To ensure identifiability, make Wool type A and tension type H the reference category. You are expected to code this in \texttt{R}, as opposed to fitting the model using \texttt{Stan}. Consider the following values for the number of leapfrog steps $L = 2, 3, 4$. Assume the momentum variable $\phi$ is drawn from a multivariate normal distribution with zero mean and variance-covariance matrix $5{\bf X}'{\bf X}$. Run a single chain for each choice of $L$ for 10000 iterations, and remove 30 \% of iterations as burn-in. Report the following.
+
+\begin{itemize}
+\item The posterior mean, standard deviations and 90 \% credible intervals for all parameters, combining the results for all chains. Interpret the 90 \% credible interval.
+\item The acceptance rate for each choice of $L$.
+\end{itemize}
+
+d) Check each chain obtained converged to the same distribution. For each chain and parameter, create acf plots. Based on this, what do you think was the best choice for $L$?
+
+e) Fit the same model using an expectation propagation algorithm. Report the approximate posterior means, and 90 \% credible interval. Comparing the results obtained using expectation propagation to Hamiltonian Monte Carlo, what \lq bias\rq\hspace{1 mm} do you think has been caused by using approximate inference. 

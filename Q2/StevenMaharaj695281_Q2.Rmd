@@ -1,0 +1,49 @@
+---
+title: 'Assignment 3 Question 2 MAST90125: Bayesian Statistical Learning'
+header-includes:
+   - \usepackage{bm}
+   - \usepackage{amsmath}
+output: 
+  pdf_document:
+    number_sections: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Due: Friday 25 October 2019**  
+\vspace{5 mm}
+
+**There are places in this assignment where R code will be required. Therefore set the random seed so assignment is reproducible.**
+
+```{r}
+set.seed(234567)  #Please change random seed to your student id number.
+```
+
+
+## Question Two: (13 marks)
+
+Researchers are interested in phone call duration. The available data consisted of 100 standardised phone call durations, and which hour ($t = 1, \ldots, 10$) the call was initiated. The researchers assumed the following model,
+
+\begin{eqnarray}
+p(y_i | \mu(t)) &=& \mathcal{N}(\mu(t),\sigma^2) \nonumber \\
+p(\mu(t))   &=& \mathcal{N}(0,k(t,t))        \nonumber 
+\end{eqnarray}
+
+such that the covariance function $k(x,x')$ is squared exponential,
+
+\[ k(x,x') = \sigma^2_Ke^{-l\times (x-x')^2},   \]
+
+with $\sigma^2_K$ fixed to 1.85 and $l$ fixed to $0.05$. The data can be downloaded from LMS as \texttt{call.csv}.
+
+a) The researchers are interested in making predictions of phone call duration, $\tilde{\bm \mu}(t)$ for hours $t = 1, \ldots, 12$. As an initial step, they assumed $\sigma^2$ was 0.95. Assume the data $\bf y$ is conditioned on a single realisation of the Gaussian process prior. Do the following:
+
+\begin{itemize}
+\item Based on the information provided, determine the joint distribution of data $\bf y$ and predictions $\tilde{\bm \mu}(t)$.
+\item Determine the distribution of $\tilde{\bm \mu}(t)$ conditional on $\bf y$, $\sigma^2$, $\sigma^2_K$ and $l$. Show working
+\item Plot the predictions with 95 \% and 99 \% credible intervals along with the observed data. Comment, in a Bayesian language, on the behaviour of predictions where no data was observed.
+\end{itemize}
+
+b) Was the inference performed in part a) fully Bayesian? If not, how would you make the analysis fully Bayesian, noting any particular difficulties that arise by assuming a Gaussian process prior. Your answer should not exceed one page of writing.
+
