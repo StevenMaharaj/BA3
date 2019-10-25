@@ -18,7 +18,8 @@ knitr::opts_chunk$set(echo = TRUE)
 **There are places in this assignment where R code will be required. Therefore set the random seed so assignment is reproducible.**
 
 ```{r}
-set.seed(234567)  #Please change random seed to your student id number.
+library(mvtnorm)
+set.seed(695281)#Please change random seed to your student id number.
 ```
 
 ## Question One (17 marks)
@@ -39,7 +40,7 @@ a) Assuming that the canonical link for observation $i$ can be represented as ${
 
 b) If you wish to construct a Bayesian analogue to Poisson regression, what prior(s) would you use?
 
-
+Answer : We choose a flat prior for $\bm \beta$. Results will be more comparable with sandard poisson GLM. ALso calculation in later parts will be simplifed.
 
 c) Fit a Poisson regression to the warpbreak data, with Wool type and tension treated as factors, using Hamiltonian Monte Carlo. To ensure identifiability, make Wool type A and tension type H the reference category. You are expected to code this in \texttt{R}, as opposed to fitting the model using \texttt{Stan}. Consider the following values for the number of leapfrog steps $L = 2, 3, 4$. Assume the momentum variable $\phi$ is drawn from a multivariate normal distribution with zero mean and variance-covariance matrix $5{\bf X}'{\bf X}$. Run a single chain for each choice of $L$ for 10000 iterations, and remove 30 \% of iterations as burn-in. Report the following.
 

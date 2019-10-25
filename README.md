@@ -1,1 +1,3 @@
 # BA3
+
+In this project we explore some properties of Expectation propagation and Hamiltonian Monte Carlo, consider the dataset Warpbreaks.csv. This dataset contains information of the number of breaks in a consignment of wool. In addition, Wool type (A or B) and tension level (L, M or H) was recorded. As the observed data consists of integer counts, it was assumed that a Poisson distribution should be used to model counts.

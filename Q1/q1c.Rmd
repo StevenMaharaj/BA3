@@ -1,0 +1,54 @@
+---
+title: 'Assignment 3 Question 1 MAST90125: Bayesian Statistical Learning'
+header-includes:
+   - \usepackage{bm}
+   - \usepackage{amsmath}
+output: 
+  pdf_document:
+    number_sections: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Due: Friday 25 October 2019**  
+\vspace{5 mm}
+
+**There are places in this assignment where R code will be required. Therefore set the random seed so assignment is reproducible.**
+
+```{r}
+set.seed(695281) 
+library(mvtnorm) #Please change random seed to your student id number.
+```
+
+
+```{r}
+# Read  data
+WOOL <- read.csv("Warpbreaks.csv")
+```
+
+```{r}
+# model poisson regression 
+mod<-glm(breaks~ ., WOOL, family = poisson(link = "log"))
+X <- model.matrix(mod)
+# sigma  <-vcov(mod)
+y <- WOOL$breaks
+p <-dim(X)[2]   #number of parameters
+```
+
+```{r}
+HMC.fn<-function(y,n,X,L,M,iter,burnin){
+  p <-dim(X)[2] #number of parameters
+  theta0<-rnorm(p) #initial values of beta
+  theta.sim<-matrix(0,iter,p+1) #matrix to store iterations plus acceptance. 
+  theta.sim[1,1:p]<-theta0 #initial values in matrix.
+  epsilon<-1/L #epsilon assuming epsilon*L =1.
+  Minv <-solve(M)
+}
+```
+
+
+
+
+
