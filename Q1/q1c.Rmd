@@ -35,18 +35,87 @@ X <- model.matrix(mod)
 # sigma  <-vcov(mod)
 y <- WOOL$breaks
 p <-dim(X)[2]   #number of parameters
+M <- 5*crossprod(X)
 ```
 
 ```{r}
-HMC.fn<-function(y,n,X,L,M,iter,burnin){
-  p <-dim(X)[2] #number of parameters
-  theta0<-rnorm(p) #initial values of beta
-  theta.sim<-matrix(0,iter,p+1) #matrix to store iterations plus acceptance. 
-  theta.sim[1,1:p]<-theta0 #initial values in matrix.
-  epsilon<-1/L #epsilon assuming epsilon*L =1.
-  Minv <-solve(M)
+
+#Part one: function for performing Hamiltonian Monte Carlo for logistic regression.
+#Inputs:
+#y: vector of responses
+#n: vector (or scalar) of trial sizes. 
+#X: predictor matrix including intercept.
+#L: number of leapfrog steps.
+#M is variance covariance matrix for normal prior of momentum variable \phi. Ideally diagonal.
+#iter: number of iterations
+#burnin: number of initial iterations to throw out.
+HMC.fn<-function(y,X,L,M,iter,burnin){ 
+p <-dim(X)[2]   #number of parameters
+library(mvtnorm)
+theta0<-rnorm(p) #initial values of beta
+theta.sim<-matrix(0,iter,p+1) #matrix to store iterations plus acceptance.
+theta.sim[1,1:p]<-theta0       #initial values in matrix.
+epsilon<-1/L                #epsilon assuming epsilon*L =1.
+Minv   <-solve(M)
+
+
+for(i in 1:(iter-1)){
+phi       <-rmvnorm(1,mean=rep(0,p),sigma=M)   #draw momentum variable.
+phi       <-as.numeric(phi)
+phi0      <-phi                             #saving starting phi for calculation of r. 
+theta     <-theta.sim[i,1:p]                 #current state of theta.  
+
+lbd.b         <-exp(X%*%theta)  #calculate lambda.
+gradtheta <- crossprod(X,y-lbd.b )   #Gradient of posterior = joint distribution with respect to theta.
+
+#leapfrog steps.
+for(j in 1:L){
+  phi   <- phi + 0.5*epsilon*gradtheta   #first half step for phi
+  theta <- theta + epsilon*(Minv%*%phi)  #full step for theta
+  
+lbd.c         <-exp(X%*%theta) #calculate probabilities of success at candidate (sub) state.
+gradtheta <- crossprod(X,y-lbd.c )   #Gradient of posterior = joint distribution with respect to theta.
+
+phi   <- phi + 0.5*epsilon*gradtheta #second half step for phi.
+phi   <- as.numeric(phi)
+}
+
+#difference of log joint distributions at final iteration of leap.frog vs current state.
+r<-sum( dpois(y,lambda = lbd.c,log=TRUE))+dmvnorm(phi,mean=rep(0,p),sigma=M,log=TRUE)-sum(dpois(y,lambda = lbd.b,log=TRUE) )-dmvnorm(phi0,mean=rep(0,p),sigma=M,log=TRUE)
+#Draw an indicator whether to accept/reject candidate
+ind<-rbinom(1,1,exp( min(c(r,0)) ) )
+theta.sim[i+1,1:p]<- ind*theta + (1-ind)*theta.sim[i,1:p]
+theta.sim[i+1,p+1] <- ind
+}
+
+#Removing the iterations in burnin phase
+results<-theta.sim[-c(1:burnin),]
+names(results)<-c('beta0','beta1','beta2','beta3','accept') #column names
+
+return(results)
 }
 ```
+
+```{r}
+HMC1<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
+HMC2<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
+HMC3<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
+HMC4<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
+```
+
+
+```{r}
+#Posterior means of beta0, beta1, beta2, beta3 Acceptance rate comparison
+HMC.all <- rbind(HMC1,HMC2,HMC3)
+colMeans(HMC.all)
+
+#Posterior standard deviations
+apply(HMC.all,2,FUN=sd)
+
+#95 % credible intervals  
+apply(HMC.all,2,FUN=function(x) quantile(x,c(0.05,0.95)) )
+```
+
 
 
 
