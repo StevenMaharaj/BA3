@@ -97,27 +97,124 @@ return(results)
 ```
 
 ```{r}
-HMC1<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
-HMC2<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
-HMC3<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
-HMC4<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
+# L = 2
+HMCl2<-HMC.fn(y=y,X=X,L=2,M=M,iter=10000,burnin=3000)
+
+# L = 3
+HMCl3<-HMC.fn(y=y,X=X,L=3,M=M,iter=10000,burnin=3000)
+
+# L = 4
+HMCl4<-HMC.fn(y=y,X=X,L=4,M=M,iter=10000,burnin=3000)
+
 ```
 
 
+For L = 2
 ```{r}
 #Posterior means of beta0, beta1, beta2, beta3 Acceptance rate comparison
-HMC.all <- rbind(HMC1,HMC2,HMC3)
-colMeans(HMC.all)
+
+colMeans(HMCl2)
 
 #Posterior standard deviations
-apply(HMC.all,2,FUN=sd)
+apply(HMCl2,2,FUN=sd)
 
-#95 % credible intervals  
-apply(HMC.all,2,FUN=function(x) quantile(x,c(0.05,0.95)) )
+#90 % credible intervals  
+apply(HMCl2,2,FUN=function(x) quantile(x,c(0.05,0.95)) )
+
+# acceptance rate 
+colMeans(HMCl2)[5]
 ```
 
 
+For L = 3
+```{r}
+#Posterior means of beta0, beta1, beta2, beta3 Acceptance rate comparison
+
+colMeans(HMCl3)
+
+#Posterior standard deviations
+apply(HMCl3,2,FUN=sd)
+
+#90 % credible intervals  
+apply(HMCl3,2,FUN=function(x) quantile(x,c(0.05,0.95)) )
+
+# acceptance rate 
+colMeans(HMCl3)[5]
+
+```
+
+For L = 4
+```{r}
+#Posterior means of beta0, beta1, beta2, beta3 Acceptance rate comparison
+colMeans(HMCl4)
+
+#Posterior standard deviations
+apply(HMCl4,2,FUN=sd)
+
+#90 % credible intervals  
+apply(HMCl4,2,FUN=function(x) quantile(x,c(0.05,0.95)) )
+
+# acceptance rate 
+colMeans(HMCl4)[5]
+```
+
+The 90% credible interval tells there is 90% probability that parameter we seek to estimate is between the lower and upper bound of the given interval.
+
+____________________________
+part D
+
+Answer: 
+We will visually check if the chains converged to the same distribution
+
+```{r}
+#plotting HMC.
+par(mfrow=c(2,2))
+for (i in 1:4) {
+plot(HMCl2[,i],type='l',main='Hamiltonian MC output',xlab='Iteration',ylab=bquote( beta[.(i-1)] ))
+lines(HMCl3[,i],col=2)
+lines(HMCl4[,i],col=3)
+}
+
+```
+
+Checking the Gelman-Rubin diagnostic.
+
+```{r}
+library(coda)
+hl1<-as.mcmc.list(as.mcmc((HMCl2[1:3500,1:4])))
+hl2<-as.mcmc.list(as.mcmc((HMCl2[1:3500,1:4])))
+hl3<-as.mcmc.list(as.mcmc((HMCl3[1:3500,1:4])))
+hl4<-as.mcmc.list(as.mcmc((HMCl3[3500+1:3500,1:4])))
+hl5<-as.mcmc.list(as.mcmc((HMCl4[3500+1:3500,1:4])))
+hl6<-as.mcmc.list(as.mcmc((HMCl4[3500+1:3500,1:4])))
+hl<-c(hl1,hl2,hl3,hl4,hl5,hl6)
+
+#Gelman-Rubin diagnostic.
+gelman.diag(hl)[[1]]
+#effective sample size.
+effectiveSize(hl)
 
 
+```
+From ploting the iterations and computing the Gelman-Rubin diagnostic we see that all the chains converged to the same distribution.
 
+Now let us check the autocorrelation in each chain using acf plots.
+```{r}
+# L=2
+par(mfrow=c(2,2))
+for (i in 1:4) {
+acf(HMCl2[,i],ylab=bquote( beta[.(i-1)] ),lag.max = 15,main="L = 2")
+}
+# L=3
+par(mfrow=c(2,2))
+for (i in 1:4) {
+acf(HMCl3[,i],ylab=bquote( beta[.(i-1)] ),lag.max = 15,main="L = 3")
+}
+# L=4
+par(mfrow=c(2,2))
+for (i in 1:4) {
+acf(HMCl4[,i],ylab=bquote( beta[.(i-1)] ),lag.max = 15,main="L = 4")
+}
+```
 
+So from above we observe that obseve that as L increase, the acceptance rate increase and from the acf plot the autocorrelation also increases. Thus one should choose a moderate value of L. In our case one should choose L=3.  
