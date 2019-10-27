@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 **There are places in this assignment where R code will be required. Therefore set the random seed so assignment is reproducible.**
 
 ```{r}
-set.seed(234567)  #Please change random seed to your student id number.
+set.seed(695281)  #Please change random seed to your student id number.
 ```
 
 
@@ -44,6 +44,11 @@ a) The researchers are interested in making predictions of phone call duration, 
 \item Determine the distribution of $\tilde{\bm \mu}(t)$ conditional on $\bf y$, $\sigma^2$, $\sigma^2_K$ and $l$. Show working
 \item Plot the predictions with 95 \% and 99 \% credible intervals along with the observed data. Comment, in a Bayesian language, on the behaviour of predictions where no data was observed.
 \end{itemize}
+
+
+Answer:
+
+
 
 b) Was the inference performed in part a) fully Bayesian? If not, how would you make the analysis fully Bayesian, noting any particular difficulties that arise by assuming a Gaussian process prior. Your answer should not exceed one page of writing.
 
