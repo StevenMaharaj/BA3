@@ -218,3 +218,121 @@ acf(HMCl4[,i],ylab=bquote( beta[.(i-1)] ),lag.max = 15,main="L = 4")
 ```
 
 So from above we observe that obseve that as L increase, the acceptance rate increase and from the acf plot the autocorrelation also increases. Thus one should choose a moderate value of L. In our case one should choose L=3.  
+
+______________
+Part E
+```{r}
+
+#Coding for implementing Expectation-propagation for poission regression.
+
+#Arguments.
+#response, response vector
+#n: vector of trial sizes
+#iter: number of rounds to consider
+#epsilon: convergence criteria.
+
+EP.logit<-function(response,n,X,iter,epsilon){
+N<-length(response) #size of dataset.
+p<-dim(X)[2]
+  
+Sigmainvmu <-matrix(0,p,N) #natural parameter \Sigma^{-1}mu
+Sigmainv  <-rep(list(diag(p)),N)  #natural parameter \Sigma^{-1}, stored as list
+
+#Previous parameters of g.
+Sigmainvmu0<-rowSums(Sigmainvmu)
+Sigmainv0   <-Reduce("+",Sigmainv)
+  
+#g_0(\bm \beta) need not be updated and is assumed flat.
+
+#function for tilted distribution
+tilt.dist      <- function(x){
+gnoti          <-dnorm(x,mean=Mnoti,sd=sqrt(Vnoti))
+# beta           <- rnorm(p,mean=Mnoti,sd=sqrt(Vnoti))
+lbd              <-exp(x)
+like           <-dpois(response[i],lbd)
+result <-gnoti*like
+return(result)
+}
+
+#loop for updating g_i(\bm \beta) i= 1, ..., n.
+for(j in 1:iter){
+for(i in 1:N){
+Sigmainvmunoti <-rowSums(Sigmainvmu)  - Sigmainvmu[,i] #Natural parameter \Sigma_{-i}^{-1}\mu_{-i}
+Sigmainvnoti   <-Reduce("+",Sigmainv) - Sigmainv[[i]]  #Natural parameter \Sigma_{-i}^{-1}\mu_{-i}
+Sigmanoti      <-solve(Sigmainvnoti)                   #parameter \Sigma_{-i}^{-1}
+munoti         <-Sigmanoti%*%Sigmainvmunoti            #parameter \mu_{-i}
+Mnoti          <-t(X[i,])%*%munoti                     #M_{-i}
+Vnoti          <-t(X[i,])%*%Sigmanoti%*%X[i,]          #V_{-i}
+
+#Moment matching.
+E0<-integrate(f= function(x) { tilt.dist(x)}, lower=Mnoti-10*sqrt(Vnoti), upper=Mnoti+10*sqrt(Vnoti))
+E1<-integrate(f= function(x) {x*tilt.dist(x)}, lower=Mnoti-10*sqrt(Vnoti), upper=Mnoti+10*sqrt(Vnoti))
+E2<-integrate(f= function(x) {x^2*tilt.dist(x)}, lower=Mnoti-10*sqrt(Vnoti), upper=Mnoti+10*sqrt(Vnoti))  
+M <- E1$value/E0$value       
+V <- E2$value/E0$value - M^2
+
+#Update g_i
+MiViinv <- M/V - Mnoti/Vnoti
+Viinv   <- 1/V - 1/Vnoti
+
+#transform back to beta scale.
+Sigmainvmu[,i] <-X[i,]%*%MiViinv  #natural parameter \Sigma^{-1}mu
+Sigmainv[[i]]  <-X[i,]%*%Viinv%*%t(X[i,])
+}
+#Note by the way the previous lines of code have been written, step six has been implicitly. 
+
+#Checking whether to stop iterations.
+currentSinvmu <-rowSums(Sigmainvmu)   
+currentSinv   <-Reduce("+",Sigmainv)
+
+  diff1  <- sqrt((currentSinvmu-Sigmainvmu0)^2)/(abs(currentSinvmu)+0.01)
+  diff2  <- sqrt((currentSinv-Sigmainv0)^2)/(abs(currentSinv)+0.01)
+  diff.all<-c(diff1,diff2)
+  if(max(diff.all) < epsilon) break else Sigmainvmu0 <- currentSinvmu; Sigmainv0 <- currentSinv 
+}
+
+#Final mean and variance-covariance matrix of g(\beta)
+Sigma <-solve(currentSinv)
+mu    <-Sigma%*%currentSinvmu
+
+
+#Storing and returning results.
+param<-list(mu,Sigma,j)
+names(param)<-c('betahat','Sigma','iter_break')
+return(param)  
+}
+```
+
+```{r}
+N <- 10
+n <- length(y)
+mresult<-EP.logit(response=y,n=rep(N,n),X=X,iter=100,epsilon=1e-6)
+```
+
+```{r}
+#Posterior means 
+report <- mresult$betahat
+ci <- matrix(rep(0,8),nrow = 4)
+#90 % credible intervals  
+std <- diag(mresult$Sigma)
+for (i in 1:4) {
+  ci[i,] <- qnorm(c(0.05,0.95),mean =mresult$betahat[i] ,sd =std[i] ) 
+}
+
+report <- cbind(report,ci)
+colnames(report) <-(c("mean","lower CI" ,"upper CI"))
+report
+```
+
+```{r}
+
+# par(mfrow=c(1,2))
+for(i in 1:4){
+plot(density(HMCl3[,i]),xlab=bquote(beta[.(i-1)]),main='Comparing approximations',cex.lab=1.5)
+# curve(dnorm(x,mean=mod$coef[i],sd=sqrt(vcov(mod)[i,i])),add=TRUE,col=2 )
+curve(dnorm(x,mean=mresult$betahat[i],sd=sqrt(mresult$Sigma[i,i])),add=TRUE,col=2 )
+legend('topleft',legend=c('HMC L=3','Expectation propagation'),col=1:2,lty=1,bty='n',cex=0.7)
+}
+```
+```
+
