@@ -3,6 +3,7 @@ title: 'Assignment 3 Question 2 MAST90125: Bayesian Statistical Learning'
 header-includes:
    - \usepackage{bm}
    - \usepackage{amsmath}
+   - \usepackage{amssymb}
 output: 
   pdf_document:
     number_sections: no
@@ -45,5 +46,27 @@ a) The researchers are interested in making predictions of phone call duration, 
 \item Plot the predictions with 95 \% and 99 \% credible intervals along with the observed data. Comment, in a Bayesian language, on the behaviour of predictions where no data was observed.
 \end{itemize}
 
+
+
+
+Answer:
+The joint distribution of the data $\bm y$ and predictions is $\mu(\tilde{\mathbf{x}})$ is
+For lecture it was shown that
+$$p\left(\begin{array}{c}{\mathbf{y}} \\ {\mu(\tilde{\mathbf{x}})}\end{array}\right)=\mathcal{N}\left(\left(\begin{array}{c}{\boldsymbol{m}(\mathbf{x})} \\ {\boldsymbol{m}(\tilde{\mathbf{x}})}\end{array}\right),\left(\begin{array}{cc}{\boldsymbol{k}(\mathbf{x}, \mathbf{x})+\boldsymbol{\Sigma}} & {\boldsymbol{k}(\mathbf{x}, \tilde{\mathbf{x}})} \\ {\boldsymbol{k}(\tilde{\mathbf{x}}, \mathbf{x})} & {\boldsymbol{k}(\tilde{\mathbf{x}}, \tilde{\mathbf{x}})}\end{array}\right)\right)$$
+
+For this question joint distribution of the data $\mathbf{y}$ and predictions is $\mu(\tilde{\mathbf{t}})$ is
+
+For lecture it was shown that
+$$p\left(\begin{array}{c}{\mathbf{y}} \\ {\mu(\tilde{\mathbf{t}})}\end{array}\right)=\mathcal{N}\left(\left(\begin{array}{c}{\boldsymbol{0}} \\ {\boldsymbol{0}}\end{array}\right),\left(\begin{array}{cc}{\boldsymbol{k}(\mathbf{t}, \mathbf{t})+\boldsymbol{\Sigma}} & {\boldsymbol{k}(\mathbf{t}, \tilde{\mathbf{t}})} \\ {\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t})} & {\boldsymbol{k}(\tilde{\mathbf{t}}, \tilde{\mathbf{t}})}\end{array}\right)\right)$$
+where $k\left(\mathbf{t}, \tilde{\mathbf{t}}\right)=\sigma_{K}^{2} e^{-l \times\left(\mathbf{t}-\tilde{\mathbf{t}}\right)^{2}}$ and $\Sigma = \sigma^2 \bm I$
+
+Now we will find $\mu(\tilde{\mathbf{t}})$ conditional on $\mathbf{y}, \sigma^{2}, \sigma_{K}^{2}, l$.
+
+For lectures, the noisless case had the follow distribution.
+
+$$\left.\boldsymbol{\mu}(\tilde{\mathbf{t}}) | . \sim \mathcal{N}(\boldsymbol{m}(\tilde{\mathbf{t}})+\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \boldsymbol{k}(\mathbf{t}, \mathbf{t})-\mathbf{m}(\mathbf{t})), \boldsymbol{k}(\tilde{\mathbf{t}}, \tilde{\mathbf{t}})-\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \boldsymbol{k}(\mathbf{t}, \mathbf{t})^{-1} \boldsymbol{k}(\mathbf{t}, \tilde{\mathbf{t}})\right)$$
+for this question  $\boldsymbol{m}(\tilde{\mathbf{t}}) = \boldsymbol{0}$, we must add $\Sigma$ to the first element of covariance block matrix. In other words $\boldsymbol{k}(\mathbf{t}, \mathbf{t}) \rightarrow \boldsymbol{k}(\mathbf{t}, \mathbf{t}) +\Sigma$. Then we have that following
+
+$$\left.\boldsymbol{\mu}(\tilde{\mathbf{t}}) |\mathbf{y}, \sigma^{2}, \sigma_{K}^{2} , l \sim \mathcal{N}(\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \left[\boldsymbol{k}(\mathbf{t}, \mathbf{t}) +\Sigma \right]), \boldsymbol{k}(\tilde{\mathbf{t}}, \tilde{\mathbf{t}})-\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \left[\boldsymbol{k}(\mathbf{t}, \mathbf{t}) +\Sigma \right]^{-1} \boldsymbol{k}(\mathbf{t}, \tilde{\mathbf{t}})\right)$$
 b) Was the inference performed in part a) fully Bayesian? If not, how would you make the analysis fully Bayesian, noting any particular difficulties that arise by assuming a Gaussian process prior. Your answer should not exceed one page of writing.
 
