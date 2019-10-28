@@ -18,10 +18,94 @@ knitr::opts_chunk$set(echo = TRUE)
 **There are places in this assignment where R code will be required. Therefore set the random seed so assignment is reproducible.**
 
 ```{r}
-set.seed(695281)  #Please change random seed to your student id number.
+set.seed(695281)
+library(mvtnorm)
 ```
 
 ```{r}
 df <- read.csv("call.csv")
 ```
+
+```{r}
+#function generating function for Gaussian process prior described on previous slide.#Inputs are
+#x: points where gaussian process was evaluated.
+#\alpha: parameter in mean function exp(-\alpha x)
+#beta: decay parameter for k
+#sigma2: scale parameter for k#n: number of functions to generate 
+mu.fun<-function(x,alpha,beta,sigma2,n){
+  library(mvtnorm)
+  mx <- exp(-alpha*x) #mean function
+  np<-length(x)       #number of location to evaluate Gaussian process.
+  mT<-matrix(x,np,np)
+  kx<- sigma2*exp(-beta*sin(pi*(mT-t(mT))/12)^2)
+  result<-rmvnorm(n,mean=mx,sigma=kx)
+  return(result)
+}
+
+#An example of generating function with $n=5$.
+x<-sort(runif(200,0,24)) #generate 200 points for gaussian process to be evaluated at.
+test<-mu.fun(x=x,alpha=-0.1,beta=2,sigma2=1,n=5)#plotting result
+plot(x,test[1,],type='l',col=1,ylim=c(min(test),max(test)),ylab=expression(mu(x)),main='realisations of Gaussian process')
+for(i in 2:5){lines(x,test[i,],type='l',col=i)}
+```
+```{r}
+mu.fun<-function(y,t,l,sigma2,sigmak2,n){
+
+  np<-length(t) #number of location to evaluate Gaussian process.
+  mT <- matrix(df$hour,np,np)
+  mT_hat<-matrix(t,np,np)
+  Sigma <- sigma2*diag(np)
+  kt_t<- sigmak2*exp(-l*(mT-t(mT))) + Sigma
+  kt_t<- Sigma
+  # kth_t<- sigmak2*exp(-l*(mT_hat-t(mT)))
+  kt_th<- sigmak2*exp(-l*(mT-t(mT_hat)))
+  kth_th<- solve(Sigma)
+  result<-rmvnorm(n,mean=t(kt_th)%*% solve(kt_t)%*%y,sigma= kth_th - ( t(kt_th)%*% solve(kt_t)%*%kt_th ) )
+  return(result)
+}
+
+#An example of generating function with $n=5$.
+t<-sort(sample(1:12,100,replace = TRUE)) #generate 100 points for gaussian process to be evaluated at.
+test<-mu.fun(y=df$duration,t=t,l=0.05,sigma2=0.95,sigmak2=1.85,n=1)#plotting result
+test_std <- (test-mean(test))/sd(test)
+plot(density(test_std),main='realisations of Gaussian process', xlab="t",ylab="standardised duration")
+den <- density(df$duration)
+lines(density(df$duration),col=2)
+abline(v=quantile(test_std,c(0.025,0.975)),col=3)
+abline(v=quantile(test_std,c(0.005,0.995)),col=4)
+legend("topright",legend = c("prediction","observed","95CI","99CI"),col = 1:4,lty = 1)
+# ,type='l',col=1,ylim=c(min(test),max(test)),ylab=expression(mu(t)),main='realisations of Gaussian process')
+```
+```{r}
+quantile(test_std,c(0.025,0.975))
+quantile(test_std,c(0.005,0.995))
+```
+
+
+
+
+
+```{r}
+
+mu.fun<-function(y,t,l,sigma2,sigmak2,n){
+
+  np<-length(t) #number of location to evaluate Gaussian process.
+  np_hat<-length(t_hat) 
+  mT<-matrix(rep(1:np,np_hat),np,np_hat)
+  Sigma <- sigma2*diag(np)
+  kt_t<- sigmak2*exp(-l*(mT-t(mT))) + Sigma
+  kth_t<- sigmak2*exp(-l*(mT_hat-t(mT)))
+  kt_th<- sigmak2*exp(-l*(mT-t(mT_hat)))
+  kth_th<- sigmak2*exp(-l*(mT_hat-t(mT_hat)))
+  result<-rmvnorm(n,mean=kth_t%*% solve(kt_t)%*%y,sigma=kth_th -kth_t%*% solve(kt_t)%*%kt_th )
+  return(result)
+}
+
+#An example of generating function with $n=5$.
+x<-sort(runif(200,0,24)) #generate 200 points for gaussian process to be evaluated at.
+test<-mu.fun(x=x,alpha=-0.1,beta=2,sigma2=1,n=5)#plotting result
+plot(x,test[1,],type='l',col=1,ylim=c(min(test),max(test)),ylab=expression(mu(x)),main='realisations of Gaussian process')
+for(i in 2:5){lines(x,test[i,],type='l',col=i)}
+```
+
 

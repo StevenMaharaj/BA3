@@ -1,5 +1,5 @@
 ---
-title: 'Assignment 3 Question 2 MAST90125: Bayesian Statistical Learning'
+title: 'Assignment 3 Question 2 MAST90125: Steven Maharaj 695281'
 header-includes:
    - \usepackage{bm}
    - \usepackage{amsmath}
@@ -19,7 +19,8 @@ knitr::opts_chunk$set(echo = TRUE)
 **There are places in this assignment where R code will be required. Therefore set the random seed so assignment is reproducible.**
 
 ```{r}
-set.seed(234567)  #Please change random seed to your student id number.
+set.seed(695281)  #Please change random seed to your student id number.
+library(mvtnorm)
 ```
 
 
@@ -58,7 +59,7 @@ For this question joint distribution of the data $\mathbf{y}$ and predictions is
 
 For lecture it was shown that
 $$p\left(\begin{array}{c}{\mathbf{y}} \\ {\mu(\tilde{\mathbf{t}})}\end{array}\right)=\mathcal{N}\left(\left(\begin{array}{c}{\boldsymbol{0}} \\ {\boldsymbol{0}}\end{array}\right),\left(\begin{array}{cc}{\boldsymbol{k}(\mathbf{t}, \mathbf{t})+\boldsymbol{\Sigma}} & {\boldsymbol{k}(\mathbf{t}, \tilde{\mathbf{t}})} \\ {\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t})} & {\boldsymbol{k}(\tilde{\mathbf{t}}, \tilde{\mathbf{t}})}\end{array}\right)\right)$$
-where $k\left(\mathbf{t}, \tilde{\mathbf{t}}\right)=\sigma_{K}^{2} e^{-l \times\left(\mathbf{t}-\tilde{\mathbf{t}}\right)^{2}}$ and $\Sigma = \sigma^2 \bm I$
+where $k\left(t_i, \tilde{t_j}\right)=\sigma_{K}^{2} e^{-l \times\left(t_i-\tilde{t_j}\right)^{2}}$ and $\Sigma = \sigma^2 \bm I$
 
 Now we will find $\mu(\tilde{\mathbf{t}})$ conditional on $\mathbf{y}, \sigma^{2}, \sigma_{K}^{2}, l$.
 
@@ -67,6 +68,47 @@ For lectures, the noisless case had the follow distribution.
 $$\left.\boldsymbol{\mu}(\tilde{\mathbf{t}}) | . \sim \mathcal{N}(\boldsymbol{m}(\tilde{\mathbf{t}})+\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \boldsymbol{k}(\mathbf{t}, \mathbf{t})-\mathbf{m}(\mathbf{t})), \boldsymbol{k}(\tilde{\mathbf{t}}, \tilde{\mathbf{t}})-\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \boldsymbol{k}(\mathbf{t}, \mathbf{t})^{-1} \boldsymbol{k}(\mathbf{t}, \tilde{\mathbf{t}})\right)$$
 for this question  $\boldsymbol{m}(\tilde{\mathbf{t}}) = \boldsymbol{0}$, we must add $\Sigma$ to the first element of covariance block matrix. In other words $\boldsymbol{k}(\mathbf{t}, \mathbf{t}) \rightarrow \boldsymbol{k}(\mathbf{t}, \mathbf{t}) +\Sigma$. Then we have that following
 
-$$\left.\boldsymbol{\mu}(\tilde{\mathbf{t}}) |\mathbf{y}, \sigma^{2}, \sigma_{K}^{2} , l \sim \mathcal{N}(\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \left[\boldsymbol{k}(\mathbf{t}, \mathbf{t}) +\Sigma \right]), \boldsymbol{k}(\tilde{\mathbf{t}}, \tilde{\mathbf{t}})-\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \left[\boldsymbol{k}(\mathbf{t}, \mathbf{t}) +\Sigma \right]^{-1} \boldsymbol{k}(\mathbf{t}, \tilde{\mathbf{t}})\right)$$
+$$\boldsymbol{\mu}(\tilde{\mathbf{t}}) |\mathbf{y}, \sigma^{2}, \sigma_{K}^{2} , l \sim \mathcal{N}\left(\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \left[\boldsymbol{k}(\mathbf{t}, \mathbf{t}) +\Sigma \right]^{-1}\mathbf{y}, \boldsymbol{k}(\tilde{\mathbf{t}}, \tilde{\mathbf{t}})-\boldsymbol{k}(\tilde{\mathbf{t}}, \mathbf{t}) \left[\boldsymbol{k}(\mathbf{t}, \mathbf{t}) +\Sigma \right]^{-1} \boldsymbol{k}(\mathbf{t}, \tilde{\mathbf{t}})\right)$$
+```{r}
+df <- read.csv("call.csv")
+```
+
+```{r}
+mu.fun<-function(y,t,l,sigma2,sigmak2,n){
+
+  np<-length(t) #number of location to evaluate Gaussian process.
+  mT <- matrix(df$hour,np,np)
+  mT_hat<-matrix(t,np,np)
+  Sigma <- sigma2*diag(np)
+  # kt_t<- sigmak2*exp(-l*(mT-t(mT))) + Sigma
+  kt_t<- Sigma
+  kt_th<- sigmak2*exp(-l*(mT-mT_hat)^2)
+  kth_th<- solve(Sigma)
+  result<-rmvnorm(n,mean=t(kt_th)%*% solve(kt_t)%*%y,sigma= kth_th - ( t(kt_th)%*% solve(kt_t)%*%kt_th ) )
+  return(result)
+}
+
+#An example of generating function with $n=5$.
+t<-sort(sample(1:12,100,replace = TRUE)) #generate 100 points for gaussian process to be evaluated at.
+test<-mu.fun(y=df$duration,t=t,l=0.05,sigma2=0.95,sigmak2=1.85,n=1)#plotting result
+test_std <- (test-mean(test))/sd(test)
+plot(density(test_std),main='realisations of Gaussian process', xlab="t",ylab="standardised duration")
+den <- density(df$duration)
+lines(density(df$duration),col=2)
+abline(v=quantile(test_std,c(0.025,0.975)),col=3)
+abline(v=quantile(test_std,c(0.005,0.995)),col=4)
+legend("topright",legend = c("prediction","observed","95CI","99CI"),col = 1:4,lty = 1)
+```
+
+
+We see that on the right side of the distribution the upper limits are further from zero than lower limits. This is because there is more uncertainty at times we did not observe(t =11,12). 
+
+
 b) Was the inference performed in part a) fully Bayesian? If not, how would you make the analysis fully Bayesian, noting any particular difficulties that arise by assuming a Gaussian process prior. Your answer should not exceed one page of writing.
 
+
+Answer:
+
+The inference from part a) was not fully bayesian as we fixed $\sigma^{2}, \sigma_{K}^{2} , l$. In order to make the inference fully bayesian one should assign priors to $\sigma^{2}, \sigma_{K}^{2} , l$.
+
+A difficulity of using a Gaussian prior is that $\bm K(t,t)$ will not be full rank for $\bm t_i = \bm t_j$ for every element this would mean $\bm K(t,t)$ is not invertiable.
